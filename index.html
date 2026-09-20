@@ -4,19 +4,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard P1</title>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     background: #0a0f1e;
     color: #e2e8f0;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
   .page { display: none; }
   .page.active { display: block; }
 
-  /* LOGIN */
+  /* ================= LOGIN ================= */
   #loginPage {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; padding: 20px;
@@ -27,17 +28,19 @@
     border-radius: 14px;
     padding: 32px 28px;
     width: 100%; max-width: 380px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   .login-box h1 { font-size: 1.5rem; margin-bottom: 4px; color: #38bdf8; }
   .login-box .subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 22px; }
+  #turnstileWidget { display: flex; justify-content: center; margin-bottom: 12px; min-height: 65px; }
 
-  /* APP */
+  /* ================= APP ================= */
   header {
     background: #101827; border-bottom: 1px solid #1e293b;
     padding: 14px 24px;
     display: flex; justify-content: space-between; align-items: center;
     position: sticky; top: 0; z-index: 10;
+    flex-wrap: wrap; gap: 10px;
   }
   header h1 { font-size: 1.2rem; color: #38bdf8; }
   nav { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -64,6 +67,7 @@
     width: 100%; padding: 9px 12px; border-radius: 8px;
     border: 1px solid #334155; background: #0a0f1e;
     color: #e2e8f0; margin-bottom: 12px; font-size: 0.9rem;
+    transition: border-color .15s;
   }
   input:focus, select:focus { outline: none; border-color: #38bdf8; }
 
@@ -75,7 +79,8 @@
     padding: 10px 16px; border-radius: 8px; cursor: pointer;
     font-size: 0.9rem; font-weight: 600; transition: background .15s;
   }
-  button.primary:hover { background: #0369a1; }
+  button.primary:hover:not(:disabled) { background: #0369a1; }
+  button.primary:disabled { opacity: 0.6; cursor: not-allowed; }
   button.secondary {
     background: #1e293b; color: #cbd5e1;
     border: 1px solid #334155;
@@ -86,9 +91,6 @@
   button.danger { background: #7f1d1d; color: #fecaca; border: none;
     padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
   button.danger:hover { background: #991b1b; }
-  button.success { background: #065f46; color: #a7f3d0; border: none;
-    padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-  button.success:hover { background: #047857; }
 
   .msg {
     font-size: 0.82rem; padding: 9px 12px; border-radius: 7px;
@@ -115,11 +117,11 @@
   .token-box {
     background: #0a0f1e; border: 1px dashed #38bdf8;
     border-radius: 8px; padding: 12px; margin-top: 10px;
-    word-break: break-all; font-family: ui-monospace, monospace;
-    font-size: 0.88rem; color: #7dd3fc;
+    word-break: break-all; font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.88rem; color: #7dd3fc; line-height: 1.6;
   }
 
-  /* SCREENS (CCTV-like) */
+  /* ================= SCREENS ================= */
   .screens-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -136,25 +138,25 @@
     border-color: #10b981;
     box-shadow: 0 0 0 1px #10b981, 0 0 30px rgba(16,185,129,0.15);
   }
-  .screen.expired { border-color: #7f1d1d; opacity: 0.85; }
+  .screen.expired { border-color: #7f1d1d; opacity: 0.9; }
   .screen-header {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 12px; gap: 8px;
   }
-  .screen-header h3 { font-size: 1rem; color: #e2e8f0; }
+  .screen-header h3 { font-size: 1rem; color: #e2e8f0; word-break: break-word; }
   .screen-status {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
-    font-weight: 600;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+    font-weight: 600; white-space: nowrap;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .dot.on { background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 1.6s infinite; }
   .dot.off { background: #475569; }
-  .dot.exp { background: #ef4444; }
+  .dot.exp { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
   .screen-timer {
-    font-family: ui-monospace, 'SF Mono', monospace;
+    font-family: ui-monospace, "SF Mono", monospace;
     font-size: 2rem; font-weight: 700;
     color: #38bdf8; letter-spacing: 0.05em;
     text-align: center; padding: 14px 0;
@@ -165,16 +167,16 @@
   .screen.expired .screen-timer { color: #ef4444; font-size: 1.2rem; }
   .screen-actions { display: flex; gap: 8px; margin-top: 12px; }
   .screen-actions button { flex: 1; padding: 9px; border-radius: 8px; border: none;
-    font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: background .15s; }
   .screen-actions .btn-on { background: #065f46; color: #a7f3d0; }
   .screen-actions .btn-on:hover { background: #047857; }
   .screen-actions .btn-off { background: #7f1d1d; color: #fecaca; }
   .screen-actions .btn-off:hover { background: #991b1b; }
-  .screen-sub { font-size: 0.72rem; color: #64748b; text-align: center; margin-top: 6px; }
+  .screen-sub { font-size: 0.72rem; color: #64748b; text-align: center; margin-top: 6px; word-break: break-all; }
 
-  /* Modal */
+  /* ================= MODAL ================= */
   .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
     display: none; align-items: center; justify-content: center;
     z-index: 100; padding: 20px;
   }
@@ -186,29 +188,39 @@
   .modal h3 { color: #38bdf8; margin-bottom: 14px; font-size: 1rem; }
   .modal-actions { display: flex; gap: 8px; margin-top: 6px; }
   .modal-actions button { flex: 1; }
+
+  @media (max-width: 640px) {
+    header { padding: 12px 16px; }
+    main { padding: 16px; }
+    .row { flex-direction: column; gap: 0; }
+    .screen-timer { font-size: 1.6rem; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ============ LOGIN ============ -->
+<!-- ================= LOGIN ================= -->
 <div id="loginPage" class="page active">
   <div class="login-box">
     <h1>Dashboard P1</h1>
     <p class="subtitle">Silakan login untuk melanjutkan</p>
 
     <label>Username</label>
-    <input id="loginUser" autocomplete="username" />
+    <input id="loginUser" autocomplete="username" placeholder="Username" />
     <label>Password</label>
-    <input id="loginPass" type="password" autocomplete="current-password" />
+    <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
 
-    <div class="cf-turnstile" data-sitekey="0x4AAAAAAE9l2lTj3w7cHhCK" data-theme="dark" style="margin-bottom:12px;"></div>
+    <div id="turnstileWidget"
+         class="cf-turnstile"
+         data-sitekey="0x4AAAAAAE9l2lTj3w7cHhCK"
+         data-theme="dark"></div>
 
-    <button class="primary" style="width:100%;" onclick="doLogin()">Login</button>
+    <button class="primary" style="width:100%;" onclick="doLogin()" id="loginBtn">Login</button>
     <div id="loginMsg" class="msg"></div>
   </div>
 </div>
 
-<!-- ============ APP ============ -->
+<!-- ================= APP ================= -->
 <div id="appPage" class="page">
   <header>
     <h1>📡 Dashboard P1</h1>
@@ -222,7 +234,7 @@
   </header>
 
   <main>
-    <!-- WEBSITES -->
+    <!-- ===== WEBSITES ===== -->
     <section id="tab-websites" class="tab">
       <div class="card">
         <h2>➕ Tambah Website</h2>
@@ -236,7 +248,7 @@
             <input id="wsUrl" placeholder="https://script.google.com/macros/s/.../exec" />
           </div>
         </div>
-        <button class="primary" onclick="addWebsite()">Verifikasi & Simpan</button>
+        <button class="primary" onclick="addWebsite()">Verifikasi &amp; Simpan</button>
         <div id="wsMsg" class="msg"></div>
       </div>
 
@@ -246,7 +258,7 @@
       </div>
     </section>
 
-    <!-- TOKENS -->
+    <!-- ===== TOKENS ===== -->
     <section id="tab-tokens" class="tab" style="display:none;">
       <div class="card">
         <h2>🔑 Buat Voucher</h2>
@@ -275,13 +287,15 @@
       </div>
     </section>
 
-    <!-- SCREENS -->
+    <!-- ===== SCREENS ===== -->
     <section id="tab-screens" class="tab" style="display:none;">
       <div class="card" style="padding:14px 18px;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
           <div>
             <h2 style="margin:0;">📺 Screens</h2>
-            <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">Timer mulai saat sinyal diterima. Voucher hanya bisa dipakai sekali.</p>
+            <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">
+              Timer mulai saat sinyal diterima. Voucher hanya bisa dipakai sekali.
+            </p>
           </div>
           <button class="secondary" onclick="refreshScreens()">⟳ Refresh</button>
         </div>
@@ -289,7 +303,7 @@
       <div id="screensGrid" class="screens-grid"></div>
     </section>
 
-    <!-- SETTINGS -->
+    <!-- ===== SETTINGS ===== -->
     <section id="tab-settings" class="tab" style="display:none;">
       <div class="card" style="max-width:520px;">
         <h2>🔒 Ubah Kredensial</h2>
@@ -312,7 +326,7 @@
   </main>
 </div>
 
-<!-- MODAL VOUCHER -->
+<!-- ================= MODAL VOUCHER ================= -->
 <div class="modal-bg" id="voucherModal">
   <div class="modal">
     <h3 id="voucherModalTitle">Masukkan Voucher</h3>
@@ -331,21 +345,28 @@
 
 <script>
 // ============================================================
-// GANTI DENGAN URL CLOUDFLARE WORKER ANDA
+// KONFIGURASI — GANTI INI
 // ============================================================
 const WORKER_URL = 'https://webpanel.daflaofficial-id.workers.dev/';
 
-// State
-let sessionToken = localStorage.getItem('p1_session') || '';
-let currentUsername = '';
-let websitesCache = [];
-let tokensCache = [];
-// activeScreens[websiteId] = { token, startedAt, expiresAt, name, url, expired }
-let activeScreens = JSON.parse(localStorage.getItem('p1_screens') || '{}');
-let timerInterval = null;
+// ============================================================
+// STATE
+// ============================================================
+let sessionToken    = localStorage.getItem('p1_session') || '';
+let currentUsername = localStorage.getItem('p1_username') || '';
+let websitesCache   = [];
+let tokensCache     = [];
+let activeScreens   = JSON.parse(localStorage.getItem('p1_screens') || '{}');
+let timerInterval   = null;
+
+// Captcha state
+let captchaToken      = '';
+let captchaReady      = false;
+let turnstileWidgetId = null;
+let isLoggingIn       = false;
 
 // ============================================================
-// API HELPER
+// API HELPER — tidak logout kecuali needLogin
 // ============================================================
 async function api(payload) {
   const resp = await fetch(WORKER_URL, {
@@ -354,68 +375,189 @@ async function api(payload) {
     body: JSON.stringify(payload)
   });
   const data = await resp.json();
-  if (data.needLogin) { forceLogout(); throw new Error('Sesi berakhir.'); }
+
+  // Hanya logout kalau server benar-benar bilang sesi invalid
+  if (data.needLogin && payload.action !== 'login') {
+    forceLogout(true);
+    throw new Error('Sesi berakhir, silakan login ulang.');
+  }
   return data;
+}
+
+// ============================================================
+// TURNSTILE
+// ============================================================
+function onTurnstileSuccess(token) {
+  captchaToken = token;
+  captchaReady = true;
+  const msg = document.getElementById('loginMsg');
+  if (msg && msg.classList.contains('err')) msg.className = 'msg';
+}
+
+function onTurnstileExpired() {
+  captchaToken = '';
+  captchaReady = false;
+  const msg = document.getElementById('loginMsg');
+  if (msg) showMsg(msg, 'Captcha kedaluwarsa, centang ulang.', 'err');
+}
+
+function onTurnstileError() {
+  captchaToken = '';
+  captchaReady = false;
+  const msg = document.getElementById('loginMsg');
+  if (msg) showMsg(msg, 'Captcha gagal dimuat. Refresh halaman.', 'err');
+}
+
+function resetTurnstile() {
+  captchaToken = '';
+  captchaReady = false;
+  if (typeof turnstile !== 'undefined' && turnstileWidgetId !== null) {
+    try { turnstile.reset(turnstileWidgetId); } catch (e) {}
+  }
+}
+
+function renderTurnstile() {
+  if (typeof turnstile === 'undefined') {
+    setTimeout(renderTurnstile, 200);
+    return;
+  }
+  const el = document.getElementById('turnstileWidget');
+  if (!el || turnstileWidgetId !== null) return;
+  try {
+    turnstileWidgetId = turnstile.render(el, {
+      sitekey: el.dataset.sitekey,
+      theme: 'dark',
+      callback: onTurnstileSuccess,
+      'expired-callback': onTurnstileExpired,
+      'error-callback': onTurnstileError
+    });
+  } catch (e) {
+    console.error('Turnstile render error:', e);
+  }
 }
 
 // ============================================================
 // LOGIN / LOGOUT
 // ============================================================
 async function doLogin() {
+  if (isLoggingIn) return;
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
   const msg = document.getElementById('loginMsg');
-  const captchaEl = document.querySelector('.cf-turnstile [name="cf-turnstile-response"]')
-                 || document.querySelector('input[name="cf-turnstile-response"]');
-  const captcha = captchaEl ? captchaEl.value : '';
+  const btn = document.getElementById('loginBtn');
 
-  if (!u || !p) return showMsg(msg, 'Username & password wajib diisi.', 'err');
-  if (!captcha) return showMsg(msg, 'Selesaikan captcha terlebih dahulu.', 'err');
+  if (!u) return showMsg(msg, 'Username wajib diisi.', 'err');
+  if (!p) return showMsg(msg, 'Password wajib diisi.', 'err');
+  if (!captchaReady || !captchaToken) {
+    return showMsg(msg, 'Selesaikan captcha terlebih dahulu.', 'err');
+  }
+
+  isLoggingIn = true;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Memproses…';
 
   try {
-    showMsg(msg, 'Memproses…', 'ok');
-    const res = await api({ action: 'login', username: u, password: p, captchaToken: captcha });
-    if (!res.success) return showMsg(msg, res.error, 'err');
+    const res = await api({
+      action: 'login',
+      username: u,
+      password: p,
+      captchaToken: captchaToken
+    });
 
+    if (!res.success) {
+      // JANGAN reset form — biarkan user perbaiki
+      showMsg(msg, res.error || 'Login gagal.', 'err');
+      // Captcha sekali pakai → reset supaya bisa submit ulang
+      resetTurnstile();
+      return;
+    }
+
+    // Sukses → simpan sesi
     sessionToken = res.sessionToken;
     currentUsername = res.username;
     localStorage.setItem('p1_session', sessionToken);
+    localStorage.setItem('p1_username', currentUsername);
+
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginUser').value = '';
+    resetTurnstile();
     enterApp();
   } catch (e) {
     showMsg(msg, e.message, 'err');
+    resetTurnstile();
+  } finally {
+    isLoggingIn = false;
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
 function enterApp() {
   document.getElementById('loginPage').classList.remove('active');
   document.getElementById('appPage').classList.add('active');
-  document.getElementById('loginPass').value = '';
-  if (typeof turnstile !== 'undefined') { try { turnstile.reset(); } catch(e){} }
   loadData();
   startTimerLoop();
 }
 
-function forceLogout() {
+function forceLogout(silent) {
   sessionToken = '';
+  currentUsername = '';
   localStorage.removeItem('p1_session');
+  localStorage.removeItem('p1_username');
+
   document.getElementById('appPage').classList.remove('active');
   document.getElementById('loginPage').classList.add('active');
+
   if (timerInterval) clearInterval(timerInterval);
+
+  resetTurnstile();
+  renderTurnstile();
+
+  if (!silent) {
+    const msg = document.getElementById('loginMsg');
+    if (msg) showMsg(msg, 'Anda telah logout.', 'ok');
+  }
 }
 
 async function doLogout() {
-  try { await api({ action: 'logout', sessionToken }); } catch(e) {}
+  try { await api({ action: 'logout', sessionToken }); } catch (e) {}
   forceLogout();
 }
 
-// Auto resume session
-(async () => {
+// ============================================================
+// AUTO RESUME SESSION
+// ============================================================
+(async function tryResumeSession() {
+  renderTurnstile();
+
   if (!sessionToken) return;
+
   try {
     const res = await api({ action: 'verifySession', sessionToken });
-    if (res.success) { currentUsername = res.username; enterApp(); }
-    else forceLogout();
-  } catch(e) { forceLogout(); }
+
+    if (res.success) {
+      currentUsername = res.username;
+      localStorage.setItem('p1_username', currentUsername);
+      enterApp();
+    } else {
+      sessionToken = '';
+      localStorage.removeItem('p1_session');
+      renderTurnstile();
+    }
+  } catch (e) {
+    console.warn('Verify session gagal:', e.message);
+    // Retry sekali sebelum menyerah
+    setTimeout(async () => {
+      try {
+        const retry = await api({ action: 'verifySession', sessionToken });
+        if (retry.success) {
+          currentUsername = retry.username;
+          enterApp();
+        }
+      } catch (_) {}
+    }, 3000);
+  }
 })();
 
 // ============================================================
@@ -424,8 +566,10 @@ async function doLogout() {
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.nav-btn[data-tab]').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).style.display = '';
-  document.querySelector(`.nav-btn[data-tab="${name}"]`).classList.add('active');
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.style.display = '';
+  const btn = document.querySelector(`.nav-btn[data-tab="${name}"]`);
+  if (btn) btn.classList.add('active');
   if (name === 'screens') refreshScreens();
 }
 
@@ -443,7 +587,7 @@ async function loadData() {
     populateSelect();
     renderScreens();
   } catch (e) {
-    console.error(e);
+    console.error('loadData error:', e.message);
   }
 }
 
@@ -556,9 +700,15 @@ async function generateToken() {
 
 async function cleanupTokens() {
   const msg = document.getElementById('cleanupMsg');
-  const res = await api({ action: 'cleanup', sessionToken });
-  if (res.success) { showMsg(msg, `✅ Menghapus ${res.deleted} voucher kedaluwarsa.`, 'ok'); loadData(); }
-  else showMsg(msg, res.error || 'Gagal.', 'err');
+  try {
+    const res = await api({ action: 'cleanup', sessionToken });
+    if (res.success) {
+      showMsg(msg, `✅ Menghapus ${res.deleted} voucher kedaluwarsa.`, 'ok');
+      loadData();
+    } else {
+      showMsg(msg, res.error || 'Gagal.', 'err');
+    }
+  } catch (e) { showMsg(msg, e.message, 'err'); }
 }
 
 // ============================================================
@@ -589,11 +739,10 @@ function renderScreens() {
       const now = Date.now();
       if (state.expired || new Date(state.expiresAt).getTime() < now) {
         card.classList.add('expired');
-        statusDot = 'exp'; statusText = 'EXPIRED';
+        statusDot = 'exp'; statusText = 'EXPIRED'; statusColor = '#f87171';
         timerHtml = '<div>⏹ WAKTU HABIS</div>';
         actionsHtml = `<button class="btn-on" onclick="openVoucherModal('${w.id}')">▶ Voucher Baru</button>`;
         sub = 'Voucher sudah habis. Perlu voucher baru untuk menyala kembali.';
-        // keep expired state visible until user acts
         if (!state.expired) {
           state.expired = true;
           activeScreens[w.id] = state;
@@ -601,7 +750,7 @@ function renderScreens() {
         }
       } else {
         card.classList.add('active');
-        statusDot = 'on'; statusText = 'ONLINE';
+        statusDot = 'on'; statusText = 'ONLINE'; statusColor = '#10b981';
         timerHtml = `<div class="screen-timer" data-exp="${state.expiresAt}">--:--:--</div>`;
         actionsHtml = `<button class="btn-off" onclick="deactivate('${w.id}')">⏹ Matikan</button>`;
         sub = `Voucher: ${esc(state.token)}`;
@@ -732,11 +881,15 @@ async function changeCredentials() {
 
   if (!oldPassword) return showMsg(msg, 'Password lama wajib diisi.', 'err');
   if (!newUsername && !newPassword) return showMsg(msg, 'Isi username atau password baru.', 'err');
+  if (newPassword && newPassword.length < 6) return showMsg(msg, 'Password baru minimal 6 karakter.', 'err');
 
   try {
     const res = await api({ action: 'changeCredentials', sessionToken, oldPassword, newUsername, newPassword });
     if (!res.success) return showMsg(msg, res.error, 'err');
     showMsg(msg, '✅ ' + res.message, 'ok');
+    document.getElementById('setOldPass').value = '';
+    document.getElementById('setNewUser').value = '';
+    document.getElementById('setNewPass').value = '';
     setTimeout(() => { forceLogout(); }, 1500);
   } catch (e) { showMsg(msg, e.message, 'err'); }
 }
@@ -745,10 +898,21 @@ async function changeCredentials() {
 // UTIL
 // ============================================================
 function showMsg(el, text, type) {
+  if (!el) return;
   el.textContent = text;
   el.className = 'msg ' + type;
-  if (type === 'ok' && text.startsWith('Mem')) return; // jangan auto clear saat loading
-  setTimeout(() => { el.className = 'msg'; }, 5000);
+
+  // Pesan loading jangan auto-clear
+  if (text.startsWith('Memproses') ||
+      text.startsWith('Memverifikasi') ||
+      text.startsWith('Mengirim')) return;
+
+  // Auto-clear pesan sukses
+  if (type === 'ok' && text.startsWith('✅')) {
+    setTimeout(() => {
+      if (el.classList.contains('ok')) el.className = 'msg';
+    }, 5000);
+  }
 }
 
 function esc(s) {
@@ -766,6 +930,14 @@ function fmtDate(d) {
     hour: '2-digit', minute: '2-digit'
   });
 }
+
+// Enter key di form login
+document.getElementById('loginPass').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('loginUser').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('loginPass').focus();
+});
 </script>
 
 </body>
